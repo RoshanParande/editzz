@@ -2,12 +2,13 @@ const express = require('express');
 const env = require('../config/env');
 const upload = require('../middleware/upload');
 const { requireAuth } = require('../middleware/auth');
+const { requireDb } = require('../middleware/dbReady');
 const { safeText } = require('../utils/text');
 const { uploadDataUrlToCloudinary, uploadToCloudinaryBuffer } = require('../utils/cloudinaryUpload');
 
 const router = express.Router();
 
-router.post('/upload', requireAuth, upload.single('image'), async (req, res) => {
+router.post('/upload', requireDb, requireAuth, upload.single('image'), async (req, res) => {
   try {
     if (req.file?.buffer?.length) {
       const imageUrl = await uploadToCloudinaryBuffer(req.file.buffer, req.file.originalname);
@@ -33,6 +34,12 @@ router.post('/upload', requireAuth, upload.single('image'), async (req, res) => 
   } catch (err) {
     res.status(500).json({ error: err.message || 'Cloudinary upload failed' });
   }
+});
+
+router.get('/upload', (_req, res) => {
+  res.status(405).json({
+    error: 'Method not allowed. Use POST /api/upload to create media.'
+  });
 });
 
 module.exports = router;

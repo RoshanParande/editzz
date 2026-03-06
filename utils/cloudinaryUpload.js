@@ -2,7 +2,14 @@ const cloudinary = require('../config/cloudinary');
 const env = require('../config/env');
 const { safeText } = require('./text');
 
+function ensureCloudinaryConfigured() {
+  if (!env.CLOUDINARY_URL && !env.HAS_CLOUDINARY_KEYS) {
+    throw new Error('Cloudinary is not configured');
+  }
+}
+
 function uploadToCloudinaryBuffer(fileBuffer, originalName) {
+  ensureCloudinaryConfigured();
   const safeName =
     safeText(originalName || 'image', 150)
       .replace(/\.[^.]+$/, '')
@@ -29,6 +36,7 @@ function uploadToCloudinaryBuffer(fileBuffer, originalName) {
 }
 
 async function uploadDataUrlToCloudinary(dataUrl, name) {
+  ensureCloudinaryConfigured();
   const safeName = safeText(name, 150).replace(/\s+/g, '-').replace(/[^a-zA-Z0-9_-]/g, '') || 'image';
   const result = await cloudinary.uploader.upload(dataUrl, {
     folder: env.CLOUDINARY_FOLDER,

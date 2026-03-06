@@ -1,6 +1,6 @@
 const path = require('path');
 
-require('dotenv').config();
+require('dotenv').config({ path: path.resolve(__dirname, '..', '.env') });
 
 const ROOT_DIR = path.resolve(__dirname, '..');
 

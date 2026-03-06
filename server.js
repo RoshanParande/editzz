@@ -1,44 +1,27 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-require("dotenv").config();
+const mongoose = require('mongoose');
+const app = require('./app');
+const env = require('./config/env');
+const { connectDatabase } = require('./config/database');
 
-const app = express();
+const PORT = env.PORT || 3000;
 
-const allowedOrigins = [
-  "https://editzzz.vercel.app",
-  "http://localhost:5173",
-];
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-const corsOptions = {
-  origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error("Not allowed by CORS"));
-  },
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
-
-app.use(express.json());
-
-const adminRoutes = require("./routes/adminRoutes");
-app.use("/api/admin", adminRoutes);
-
-const PORT = process.env.PORT || 5000;
-
-mongoose
-  .connect(process.env.MONGO_URI)
+connectDatabase()
   .then(() => {
-    console.log("MongoDB connected");
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
+    console.log('MongoDB connected');
   })
   .catch((err) => {
     console.error(`MongoDB connection failed: ${err.message}`);
-    process.exit(1);
+    console.error('Server is still running, but DB-backed routes may fail.');
   });
+
+process.on('SIGINT', async () => {
+  try {
+    await mongoose.connection.close();
+  } finally {
+    process.exit(0);
+  }
+});

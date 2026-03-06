@@ -10,15 +10,34 @@ const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
-const allowedOrigins = [
+const defaultAllowedOrigins = [
   'https://editzzz.vercel.app',
   'http://localhost:5173',
+  'http://localhost:5174',
 ];
+
+const envAllowedOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((item) => item.trim())
+  .filter(Boolean);
+
+const allowedOrigins = [...new Set([...defaultAllowedOrigins, ...envAllowedOrigins])];
+const localhostRegex = /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/i;
+const lanRegex = /^https?:\/\/((192\.168|10)\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[0-1])\.\d{1,3}\.\d{1,3})(:\d+)?$/i;
+const isProduction = process.env.NODE_ENV === 'production';
 
 const corsOptions = {
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
-    return cb(new Error('Not allowed by CORS'));
+    if (!origin) {
+      return cb(null, true);
+    }
+    if (!isProduction) {
+      return cb(null, true);
+    }
+    if (allowedOrigins.includes(origin) || localhostRegex.test(origin) || lanRegex.test(origin)) {
+      return cb(null, true);
+    }
+    return cb(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

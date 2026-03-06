@@ -1,11 +1,12 @@
 const crypto = require('crypto');
 const express = require('express');
 const ContactMessage = require('../models/ContactMessage');
+const { requireDb } = require('../middleware/dbReady');
 const { safeText } = require('../utils/text');
 
 const router = express.Router();
 
-router.post('/contact', async (req, res) => {
+router.post('/contact', requireDb, async (req, res) => {
   try {
     const name = safeText(req.body?.name, 120);
     const email = safeText(req.body?.email, 200);
